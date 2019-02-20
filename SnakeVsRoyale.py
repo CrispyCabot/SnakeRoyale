@@ -16,7 +16,7 @@ pygame.display.set_caption("Snake Royale")
 
 PATH = os.path.abspath(__file__)
 PATH = PATH[0:-16] #-10 to chop off SnakeVs.py
-font = pygame.font.Font(os.path.join(PATH,'font.ttf'), 36)
+font = pygame.font.SysFont('', 24)
 
 clock = pygame.time.Clock()
 
@@ -31,10 +31,11 @@ class Snake:
         self.name = name #Name 'Chris'
         self.length = 1
         self.alive = True
+        self.color = (randint(0,255),randint(0,255),randint(0,255))
     def getInfo(self):
-        return [self.bod, self.dir, self.pos]
+        return [self.bod.copy(), self.dir, self.pos.copy()]
     def setDir(self, info):
-        self.dir = getattr(playerUpdates, self.name)(self.pos, self.bod, self.dir, info)
+        self.dir = getattr(playerUpdates, self.name)(self.pos.copy(), self.bod.copy(), self.dir, info.copy())
     def update(self, win):
         if self.alive:
             if self.dir == 'right':
@@ -51,13 +52,20 @@ class Snake:
             if len(self.bod) > length: #length is global, self.length is the class variable
                 self.bod.pop(0)
         for i in self.bod:
-            pygame.draw.rect(win, (0,255,0), pygame.Rect(i[0], i[1], size, size))
+            pygame.draw.rect(win, self.color, pygame.Rect(i[0], i[1], size, size))
+        nameText = font.render(self.name, True, (100,100,100))
+        loc = nameText.get_rect()
+        loc.center = (self.pos[0]+10, self.pos[1]-14)
+        w, h = loc.size
+        pygame.draw.rect(win, (255,255,255), pygame.Rect(loc.x, loc.y, w, h))
+        win.blit(nameText, loc)
 
 def main():
     global length
-    players = ['Chris', 'Cary']
+    players = ['Chris', 'Person']
     snakeList = []
     info = []
+    tickRate = 5
 
     dirs = ['right', 'left', 'up', 'down']
     for i in players:
@@ -68,7 +76,7 @@ def main():
     playing = True
     tStart = time.time()
     while playing:
-        clock.tick(50)
+        clock.tick(tickRate)
         for event in pygame.event.get():
             if event.type == QUIT:
                 playing = False
@@ -94,6 +102,8 @@ def main():
         if (time.time()-tStart) > 1:
             length += 1
             tStart = time.time()
+        if length > 3:
+            tickRate = 40
 
         #Draw everything
         pygame.draw.rect(win, (0,0,0), pygame.Rect(0,0,width,height))
@@ -103,7 +113,7 @@ def main():
         pygame.display.update()
 
     while end: #This is just so it doesn't immediately close after someone loses
-        clock.tick(size)
+        clock.tick(tickRate)
         for event in pygame.event.get():
             if event.type == QUIT:
                 end = False
@@ -119,6 +129,8 @@ def main():
     pygame.quit()
 
 class playerUpdates:
+    #pos is [x,y] bod is [[x,y],[x,y]...]
+    #info is [[bod, dir, pos], [bod, dir, pos]...]
     def Chris(pos, bod, dir, info):
         newX, newY = pos[0], pos[1]
         if dir == 'right':
@@ -139,7 +151,7 @@ class playerUpdates:
         if newY < 0:
             return 'left'
         return dir
-    def Cary(pos, bod, dir, info):
+    def Person(pos, bod, dir, info):
         newX, newY = pos[0], pos[1]
         if dir == 'right':
             newX += size
